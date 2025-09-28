@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en",
+  "allowCompoundWords": true,
+  "ignorePaths": [
+    ".git",
+    "node_modules",
+    "**/dist",
+    "**/build",
+    "**/.turbo",
+    "**/coverage",
+    ".devcontainer/data",
+    "**/*.min.*",
+    "**/*.lock",
+    "pnpm-lock.yaml"
+  ],
+  "words": [
+    "sky-monitor",
+    "ClickHouse",
+    "Kafka",
+    "PostgreSQL",
+    "Redis",
+    "Caddy",
+    "NestJS",
+    "TypeORM",
+    "TypeScript",
+    "DSN",
+    "pnpm",
+    "turbo",
+    "TurboRepo",
+    "Vite",
+    "Tailwind",
+    "Radix",
+    "WebVitals",
+    "kafkajs",
+    "bullmq",
+    "typeorm",
+    "clickhouse",
+    "skyclickhouse",
+    "skypostgres"
+  ],
+  "dictionaries": [
+    "softwareTerms",
+    "node",
+    "typescript",
+    "filetypes"
+  ],
+  "overrides": [
+    {
+      "filename": "**/*.{ts,tsx,js,jsx,md,mdx}"
+    }
+  ]
+}
