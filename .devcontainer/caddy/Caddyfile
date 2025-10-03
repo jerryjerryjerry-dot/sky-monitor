@@ -1,0 +1,63 @@
+# ==================================================
+# Sky-Monitor 生产环境 Caddy 配置
+# 用于生产环境的反向代理和静态文件服务
+# ==================================================
+
+# 默认 HTTP 服务（开发环境可改为域名）
+:80 {
+    # 启用压缩
+    encode zstd gzip
+
+    # 缓存控制
+    header +Cache-Control "max-age=0, private, must-revalidate"
+
+    # API 代理到 Monitor Server (数据服务)
+    handle_path /api/* {
+        rewrite * /api{path}
+        reverse_proxy sky-monitor-api:8081
+    }
+
+    # DSN 代理到 DSN Server (SDK 数据接收)
+    handle_path /dsn/* {
+        rewrite * /dsn{path}
+        reverse_proxy sky-monitor-dsn:8080
+    }
+
+    # 去除尾部斜杠
+    uri strip_suffix /
+
+    # 前端静态资源
+    root * /app/frontend/monitor/dist
+    
+    handle {
+        # SPA 路由支持
+        try_files {path} {path}.html /index.html
+        file_server
+    }
+}
+
+# ==================================================
+# 生产域名配置示例（需要时取消注释）
+# ==================================================
+# monitor.yourdomain.com {
+#     encode zstd gzip
+#     header +Cache-Control "max-age=0, private, must-revalidate"
+#     
+#     handle_path /api/* {
+#         rewrite * /api{path}
+#         reverse_proxy sky-monitor-api:8081
+#     }
+#     
+#     handle_path /dsn/* {
+#         rewrite * /dsn{path}
+#         reverse_proxy sky-monitor-dsn:8080
+#     }
+#     
+#     uri strip_suffix /
+#     root * /app/frontend/monitor/dist
+#     
+#     handle {
+#         try_files {path} {path}.html /index.html
+#         file_server
+#     }
+# }

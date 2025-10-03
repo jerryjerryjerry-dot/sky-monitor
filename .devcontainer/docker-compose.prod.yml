@@ -1,0 +1,148 @@
+# Sky-Monitor 生产环境 Docker Compose 配置
+# 包含所有服务（基础设施 + 应用服务）
+version: '3.8'
+
+services:
+    # Kafka 消息队列
+    sky-monitor-kafka:
+        image: bitnami/kafka:latest
+        container_name: sky-monitor-kafka
+        environment:
+            - KAFKA_CFG_PROCESS_ROLES=broker,controller
+            - KAFKA_CFG_NODE_ID=1
+            - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@sky-monitor-kafka:9093
+            - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://sky-monitor-kafka:9092
+            - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+            - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+            - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+            - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+            - ALLOW_PLAINTEXT_LISTENER=yes
+        volumes:
+            - kafka_data:/bitnami/kafka
+        networks:
+            - sky-monitor-network
+
+    # ClickHouse 数据仓库
+    sky-monitor-clickhouse:
+        image: bitnami/clickhouse:latest
+        container_name: sky-monitor-clickhouse
+        environment:
+            - CLICKHOUSE_USER=default
+            - CLICKHOUSE_PASSWORD=skyclickhouse
+            - CLICKHOUSE_DATABASE=default
+        volumes:
+            - clickhouse_data:/bitnami/clickhouse
+        networks:
+            - sky-monitor-network
+
+    # PostgreSQL 关系数据库
+    sky-monitor-postgresql:
+        image: bitnami/postgresql:latest
+        container_name: sky-monitor-postgresql
+        environment:
+            - POSTGRESQL_USERNAME=postgres
+            - POSTGRESQL_PASSWORD=skypostgres
+            - POSTGRESQL_DATABASE=sky_monitor
+            - POSTGRESQL_TIMEZONE=Asia/Shanghai
+            - POSTGRESQL_LOG_TIMEZONE=Asia/Shanghai
+        volumes:
+            - postgresql_data:/bitnami/postgresql
+        networks:
+            - sky-monitor-network
+
+    # Redis 缓存
+    sky-monitor-redis:
+        image: bitnami/redis:latest
+        container_name: sky-monitor-redis
+        environment:
+            - REDIS_PASSWORD=skyredis
+        volumes:
+            - redis_data:/bitnami/redis
+        networks:
+            - sky-monitor-network
+
+    # Monitor Server (API 服务)
+    sky-monitor-api:
+        build:
+            context: ..
+            dockerfile: .devcontainer/Dockerfile.api
+        container_name: sky-monitor-api
+        ports:
+            - '8081:8081'
+        environment:
+            - NODE_ENV=production
+            - DB_HOST=sky-monitor-postgresql
+            - DB_PORT=5432
+            - DB_USERNAME=postgres
+            - DB_PASSWORD=skypostgres
+            - DB_DATABASE=sky_monitor
+            - CLICKHOUSE_URL=http://sky-monitor-clickhouse:8123
+            - CLICKHOUSE_USERNAME=default
+            - CLICKHOUSE_PASSWORD=skyclickhouse
+            - REDIS_HOST=sky-monitor-redis
+            - REDIS_PORT=6379
+            - REDIS_PASSWORD=skyredis
+            - KAFKA_BROKERS=sky-monitor-kafka:9092
+        depends_on:
+            - sky-monitor-postgresql
+            - sky-monitor-clickhouse
+            - sky-monitor-redis
+            - sky-monitor-kafka
+        networks:
+            - sky-monitor-network
+
+    # DSN Server (SDK 数据接收服务)
+    sky-monitor-dsn:
+        build:
+            context: ..
+            dockerfile: .devcontainer/Dockerfile.dsn
+        container_name: sky-monitor-dsn
+        ports:
+            - '8080:8080'
+        environment:
+            - NODE_ENV=production
+            - DB_HOST=sky-monitor-postgresql
+            - DB_PORT=5432
+            - DB_USERNAME=postgres
+            - DB_PASSWORD=skypostgres
+            - DB_DATABASE=sky_monitor
+            - CLICKHOUSE_URL=http://sky-monitor-clickhouse:8123
+            - CLICKHOUSE_USERNAME=default
+            - CLICKHOUSE_PASSWORD=skyclickhouse
+            - KAFKA_BROKERS=sky-monitor-kafka:9092
+        depends_on:
+            - sky-monitor-kafka
+            - sky-monitor-clickhouse
+        networks:
+            - sky-monitor-network
+
+    # Caddy 反向代理
+    sky-monitor-caddy:
+        image: caddy:latest
+        container_name: sky-monitor-caddy
+        ports:
+            - '80:80'
+            - '443:443'
+            - '443:443/udp'
+        volumes:
+            - ./caddy:/etc/caddy
+            - ../apps/frontend/monitor/dist:/app/frontend/monitor/dist
+            - caddy_data:/data
+            - caddy_config:/config
+        depends_on:
+            - sky-monitor-api
+            - sky-monitor-dsn
+        networks:
+            - sky-monitor-network
+
+volumes:
+    kafka_data:
+    clickhouse_data:
+    postgresql_data:
+    redis_data:
+    caddy_data:
+    caddy_config:
+
+networks:
+    sky-monitor-network:
+        driver: bridge
