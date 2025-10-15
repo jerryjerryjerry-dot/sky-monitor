@@ -11,16 +11,10 @@
     # 缓存控制
     header +Cache-Control "max-age=0, private, must-revalidate"
 
-    # API 代理到 Monitor Server (数据服务)
+    # API 代理到 Monitor Server（前端管理界面调用）
     handle_path /api/* {
         rewrite * /api{path}
         reverse_proxy sky-monitor-api:8081
-    }
-
-    # DSN 代理到 DSN Server (SDK 数据接收)
-    handle_path /dsn/* {
-        rewrite * /dsn{path}
-        reverse_proxy sky-monitor-dsn:8080
     }
 
     # 去除尾部斜杠
@@ -48,11 +42,7 @@
 #         reverse_proxy sky-monitor-api:8081
 #     }
 #     
-#     handle_path /dsn/* {
-#         rewrite * /dsn{path}
-#         reverse_proxy sky-monitor-dsn:8080
-#     }
-#     
+#   
 #     uri strip_suffix /
 #     root * /app/frontend/monitor/dist
 #     

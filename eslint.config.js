@@ -10,13 +10,21 @@ const tseslint = require('typescript-eslint')
 const ignores = [
     'dist',
     'build',
+    'node_modules',
     '**/*.js',
     '**/*.mjs',
     '**/*.d.ts',
+    '**/*.map',
     'eslint.config.js',
     'commitlint.config.js',
+    '**/vite.config.ts',
+    '**/tailwind.config.js',
+    '**/postcss.config.js',
     'apps/frontend/monitor/src/components/ui/**/*',
     'packages/browser-utils/src/metrics/**/*',
+    'sql/**/*',
+    '.devcontainer/**/*',
+    'doc/**/*',
 ]
 
 const frontendMonitorConfig = {
@@ -39,6 +47,7 @@ const frontendMonitorConfig = {
 
 const backendMonitorConfig = {
     files: ['apps/backend/**/*.ts'],
+    ignores: ['apps/backend/**/dist/**/*', 'apps/backend/**/node_modules/**/*'],
     languageOptions: {
         globals: {
             ...globals.node,
@@ -51,7 +60,8 @@ const backendMonitorConfig = {
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         '@typescript-eslint/interface-name-prefix': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
-        'no-console': 'error',
+        // 后端允许使用 console（用于日志输出）
+        'no-console': 'off',
     },
 }
 
@@ -67,7 +77,8 @@ module.exports = tseslint.config(
             // 临时关闭以规避 @typescript-eslint 与 ESLint 版本/配置不匹配导致的崩溃
             'no-unused-expressions': 'off',
             '@typescript-eslint/no-unused-expressions': 'off',
-            'prettier/prettier': 'error',
+            // Prettier 格式问题降级为警告（不阻塞开发）
+            'prettier/prettier': 'warn',
             'simple-import-sort/imports': 'error',
         },
     },

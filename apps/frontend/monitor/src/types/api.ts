@@ -38,7 +38,7 @@ export interface Application {
     id: number
     appId: string
     name: string
-    type: 'vanilla' | 'react' | 'vue'
+    type: "vanilla" | "react" | "vue"
     description?: string
     createdAt: string
     updatedAt?: string
@@ -51,7 +51,7 @@ export interface ApplicationListRes {
 
 export interface CreateApplicationPayload {
     name: string
-    type: 'vanilla' | 'react' | 'vue'
+    type: "vanilla" | "react" | "vue"
     description?: string
 }
 

@@ -19,16 +19,12 @@ export default defineConfig({
         host: '0.0.0.0', // 允许外部访问
         port: 5173,
         proxy: {
-            // API 代理到 Monitor Server
+            // API 代理到 Monitor Server（前端管理界面调用）
             '/api': {
                 target: 'http://localhost:8081',
                 changeOrigin: true,
             },
-            // DSN 代理到 DSN Server（如果前端需要直接调用）
-            '/dsn': {
-                target: 'http://localhost:8080',
-                changeOrigin: true,
-            },
+            // 注意：DSN Server 是给外部 SDK 直接访问的，前端管理界面不需要调用
         },
     },
 
